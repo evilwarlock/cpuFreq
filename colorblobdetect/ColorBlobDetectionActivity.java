@@ -60,11 +60,13 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     private Mat                  mSpectrum;
     private Size                 SPECTRUM_SIZE;
     private Scalar               CONTOUR_COLOR;
+    private Scalar               CONTOUR_COLOR2;
     private Point                touchedPoint1; // point touched 1
     private Rect                 touchedRect1; // 4x4 region around touched point 1
     private Point                touchedPoint2; // point touched 2
     private Rect                 touchedRect2; // 4x4 region around touched point 2
     private Scalar               BOUNDING_COLOR;
+    private Scalar               BOUNDING_COLOR2;
     private Rect                 drawnRect;
     private CPUController        cpuController1;
 
@@ -120,7 +122,9 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         mBlobColorHsv = new Scalar(255);
         SPECTRUM_SIZE = new Size(200, 64);
         CONTOUR_COLOR = new Scalar(255,0,0,255);
-        BOUNDING_COLOR = new Scalar(0,0,255,255);
+        CONTOUR_COLOR2 = new Scalar(0,0,255,255);
+        BOUNDING_COLOR = new Scalar(255,0,0,255);
+        BOUNDING_COLOR2 = new Scalar(0,0,255,255);
         drawnRect = new Rect(); // bounding box of the drawn contour by user
         touchedPoint1 = new Point(); // touched point 1
         touchedPoint2 = new Point(); // touched point 2
@@ -128,8 +132,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         touchedRect2 = new Rect(); // touched region 2
 
         // initialize cpu controller, set to 400 MHz
-        cpuController1 = new CPUController();
-        cpuController1.CPU_FreqChange(2);
+//        cpuController1 = new CPUController();
+//        cpuController1.CPU_FreqChange(2);
         //System.out.println("here");
         Log.i(TAG, "Power save mode");
 
@@ -141,7 +145,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
     public boolean onTouch(View v, MotionEvent event) {
 
-        cpuController1.CPU_FreqChange(4);// Set the frequency to 1 GHz
+//        cpuController1.CPU_FreqChange(4);// Set the frequency to 1 GHz
 
         // get the real x y value after offset
         int cols = mRgba.cols();
@@ -222,7 +226,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         }
 
 
-        return true; // don't need subsequent touch events
+        return false; // need subsequent touch events
     }
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
@@ -230,55 +234,59 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
         if (mIsColorSelected) {
 
-            // draw the touchedRegion
-            Core.rectangle(mRgba, touchedRect1.tl(), touchedRect1.br(), CONTOUR_COLOR); // draw object 1
-            // go to detection
-            mDetector.process(mRgba);
-            if(mIsTracking){
-                Core.rectangle(mRgba, touchedRect2.tl(), touchedRect2.br(), CONTOUR_COLOR); // draw object 2
-                mDetector2.process(mRgba);
+            Core.rectangle(mRgba, touchedRect1.tl(), touchedRect1.br(), CONTOUR_COLOR); // draw touched rect on object 1
 
-            }
+            mDetector.process(mRgba); // process detector
 
+            List<MatOfPoint> contours = mDetector.getContours(); // get contours for obj 1
+            Log.e(TAG, "Contours count:  " + contours.size());
 
+            List<Rect> finalBox = new ArrayList<Rect>(); // convert list to array
 
-            // get contours
-            List<MatOfPoint> contours = mDetector.getContours();
-            Log.e(TAG, "Contours count: " + contours.size());
+            Imgproc.drawContours(mRgba, contours, -1, CONTOUR_COLOR); // draw contours for object 1
 
-            // convert list to array
-            List<Rect> finalBox = new ArrayList<Rect>();
-            Imgproc.drawContours(mRgba, contours, -1, CONTOUR_COLOR);
-
-            // get boundingBox for each contour
+            // draw boundingBox for each contour
             for (int i = 0; i < contours.size(); i++) {
                 finalBox.add(i, Imgproc.boundingRect(contours.get(i)));
-//                if(touchedPoint.inside(finalBox.get(i))||(trackingPoint.inside(finalBox.get(i)))){   // test for trackingPoint & touchedPoint
                 if(touchedPoint1.inside(finalBox.get(i))){
 
                     Core.rectangle(mRgba, finalBox.get(i).tl(), finalBox.get(i).br(), BOUNDING_COLOR);
-                    trackingPoint.x = (finalBox.get(i).tl().x + finalBox.get(i).br().x)/2.0;
-                    trackingPoint.y = (finalBox.get(i).tl().y + finalBox.get(i).br().y)/2.0;
+                    touchedPoint1.x = (finalBox.get(i).tl().x + finalBox.get(i).br().x)/2.0;
+                    touchedPoint1.y = (finalBox.get(i).tl().y + finalBox.get(i).br().y)/2.0;
 //                    Log.e(TAG, "trackingPoint: " + trackingPoint);
 //                    Log.e(TAG, "final box: " + finalBox);
                 }
-                else if(trackingPoint.inside(finalBox.get(i))){
 
-                    Core.rectangle(mRgba, finalBox.get(i).tl(), finalBox.get(i).br(), BOUNDING_COLOR);
-                    trackingPoint.x = (finalBox.get(i).tl().x + finalBox.get(i).br().x)/2.0;
-                    trackingPoint.y = (finalBox.get(i).tl().y + finalBox.get(i).br().y)/2.0;
+            }
+
+            // track the 2nd object
+            if(mIsTracking){
+                Core.rectangle(mRgba, touchedRect2.tl(), touchedRect2.br(), CONTOUR_COLOR2); // draw touched rect on object 2
+
+                mDetector2.process(mRgba); // process detector
+
+                List<MatOfPoint> contours2 = mDetector2.getContours(); // get contours for obj 1
+                Log.e(TAG, "Contours count2: " + contours2.size());
+
+                List<Rect> finalBox2 = new ArrayList<Rect>(); // convert list to array
+
+                Imgproc.drawContours(mRgba, contours2, -1, CONTOUR_COLOR2); // draw contours for object 1
+
+                // draw boundingBox for each contour
+                for (int i = 0; i < contours2.size(); i++) {
+                    finalBox2.add(i, Imgproc.boundingRect(contours2.get(i)));
+                    if(touchedPoint2.inside(finalBox2.get(i))){
+
+                        Core.rectangle(mRgba, finalBox2.get(i).tl(), finalBox2.get(i).br(), BOUNDING_COLOR2);
+                        touchedPoint2.x = (finalBox2.get(i).tl().x + finalBox2.get(i).br().x)/2.0;
+                        touchedPoint2.y = (finalBox2.get(i).tl().y + finalBox2.get(i).br().y)/2.0;
+//                    Log.e(TAG, "trackingPoint: " + trackingPoint);
+//                    Log.e(TAG, "final box: " + finalBox);
+                    }
 
                 }
             }
-            // determine if touchedPoint is in the boundingBox
 
-            // display the boundingBox
-            // draw contours
-
-
-            // get rectangle including roi&contour
-            //Rect finalBox = Imgproc.boundingRect(contours);
-            //Core.rectangle(mRgba, finalBox.tl(), finalBox.br(), CONTOUR_COLOR);
             Mat colorLabel = mRgba.submat(4, 68, 4, 68);
             colorLabel.setTo(mBlobColorRgba);
 
