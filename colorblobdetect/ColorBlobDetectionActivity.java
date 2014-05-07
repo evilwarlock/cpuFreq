@@ -152,9 +152,9 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         int x = (int)event.getX() - xOffset;
         int y = (int)event.getY() - yOffset;
 
-        Point newTouchPoint = new Point(); // initialize the newTouchPoint
-        newTouchPoint.x = (double)x;
-        newTouchPoint.y = (double)y;
+        Point newPoint = new Point(); // initialize the newTouchPoint
+        newPoint.x = (double)x;
+        newPoint.y = (double)y;
 
         // switch event action
         switch (event.getAction()) {
@@ -164,9 +164,9 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             // add some commnents here for test
             case MotionEvent.ACTION_DOWN:
                 if(!isTracking) { // if it is not tracking, for the first time, it saves touched point
-                    curPoint = newTouchPoint; // save the 1st touched point to be current point
-                    drawnContour.add(newTouchPoint); // add to List<point> drawnContour
-                    aaaa;
+                    curPoint = newPoint; // save the 1st touched point to be current point
+                    drawnContour.add(newPoint); // add to List<point> drawnContour
+
 //                Log.i(TAG, "Touch image coordinates: (" + x + ", " + y + ")");
                 }
 
@@ -176,9 +176,9 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             // touched moving
             case MotionEvent.ACTION_MOVE:
 
-                drawnContour.add(newTouchPoint); // add newTouchPoint to drawnContour
-                Core.line(mRgba, curPoint, newTouchPoint, BOUNDING_COLOR, 3); // draw line for new contour
-                curPoint = newTouchPoint; // set newTouchPoint as new current point
+                drawnContour.add(newPoint); // add newTouchPoint to drawnContour
+                Core.line(mRgba, curPoint, newPoint, BOUNDING_COLOR, 3); // draw line for new contour
+                curPoint = newPoint; // set newTouchPoint as new current point
 
                 break;
             // when finger up
