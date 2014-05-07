@@ -160,10 +160,13 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         switch (event.getAction()) {
 
             // when user touch screen
+
+            // add some commnents here for test
             case MotionEvent.ACTION_DOWN:
                 if(!isTracking) { // if it is not tracking, for the first time, it saves touched point
                     curPoint = newTouchPoint; // save the 1st touched point to be current point
                     drawnContour.add(newTouchPoint); // add to List<point> drawnContour
+                    aaaa;
 //                Log.i(TAG, "Touch image coordinates: (" + x + ", " + y + ")");
                 }
 
