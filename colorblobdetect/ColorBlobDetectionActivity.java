@@ -31,28 +31,6 @@ import android.view.View.OnTouchListener;
 
 public class ColorBlobDetectionActivity extends Activity implements OnTouchListener, CvCameraViewListener2 {
     private static final String  TAG              = "OCVSample::Activity";
-
-    private boolean              mIsColorSelected = false;
-    private Mat                  mRgba;
-    private Scalar               mBlobColorRgba;
-    private Scalar               mBlobColorHsv;
-    private ColorBlobDetector    mDetector;
-    private Mat                  mSpectrum;
-    private Size                 SPECTRUM_SIZE;
-    private Scalar               CONTOUR_COLOR;
-    private Rect                 regionOfInterest;
-    private Point                pointOfInterest; // point
-    private Scalar               BOUNDING_COLOR;
-    private List<Point>          drawnContour;
-    private Point                curPoint;
-    private Rect                 drawnRect;
-    private CPUController        cpuController1;
-    private boolean              isTracking;
-
-//    private Path                 pathDrawn;
-
-    private CameraBridgeViewBase mOpenCvCameraView;
-
     private BaseLoaderCallback  mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -71,6 +49,27 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             }
         }
     };
+    private boolean              mIsColorSelected = false;
+    private boolean              mIsTracking = false;
+
+    private Mat                  mRgba;
+    private Scalar               mBlobColorRgba;
+    private Scalar               mBlobColorHsv;
+    private ColorBlobDetector    mDetector;
+    private ColorBlobDetector    mDetector2;
+    private Mat                  mSpectrum;
+    private Size                 SPECTRUM_SIZE;
+    private Scalar               CONTOUR_COLOR;
+    private Point                touchedPoint1; // point touched 1
+    private Rect                 touchedRect1; // 4x4 region around touched point 1
+    private Point                touchedPoint2; // point touched 2
+    private Rect                 touchedRect2; // 4x4 region around touched point 2
+    private Scalar               BOUNDING_COLOR;
+    private Rect                 drawnRect;
+    private CPUController        cpuController1;
+
+    //    private Path                 pathDrawn;
+    private CameraBridgeViewBase mOpenCvCameraView;
 
     public ColorBlobDetectionActivity() {
         Log.i(TAG, "Instantiated new " + this.getClass());
@@ -115,18 +114,20 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     public void onCameraViewStarted(int width, int height) {
         mRgba = new Mat(height, width, CvType.CV_8UC4);
         mDetector = new ColorBlobDetector();
+        mDetector2 = new ColorBlobDetector();
         mSpectrum = new Mat();
         mBlobColorRgba = new Scalar(255);
         mBlobColorHsv = new Scalar(255);
         SPECTRUM_SIZE = new Size(200, 64);
         CONTOUR_COLOR = new Scalar(255,0,0,255);
         BOUNDING_COLOR = new Scalar(0,0,255,255);
-        drawnContour = new ArrayList<Point>(); // save the drawn contour by user
-        curPoint = new Point(); // current point on the drawn contour
         drawnRect = new Rect(); // bounding box of the drawn contour by user
-        isTracking = false;
-//        pathDrawn = new Path();
+        touchedPoint1 = new Point(); // touched point 1
+        touchedPoint2 = new Point(); // touched point 2
+        touchedRect1 = new Rect(); // touched region 1
+        touchedRect2 = new Rect(); // touched region 2
 
+        // initialize cpu controller, set to 400 MHz
         cpuController1 = new CPUController();
         cpuController1.CPU_FreqChange(2);
         //System.out.println("here");
@@ -138,11 +139,9 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         mRgba.release();
     }
 
-//    private float mX, mY;
-
     public boolean onTouch(View v, MotionEvent event) {
 
-        cpuController1.CPU_FreqChange(4);// Set the frequency to maximum
+        cpuController1.CPU_FreqChange(4);// Set the frequency to 1 GHz
 
         // get the real x y value after offset
         int cols = mRgba.cols();
@@ -152,61 +151,28 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         int x = (int)event.getX() - xOffset;
         int y = (int)event.getY() - yOffset;
 
-        Point newPoint = new Point(); // initialize the newTouchPoint
-        newPoint.x = (double)x;
-        newPoint.y = (double)y;
+        // check if x y is in image frame
+        if ((x < 0) || (y < 0) || (x > cols) || (y > rows)) return false;
 
         // switch event action
         switch (event.getAction()) {
 
             // when user touch screen
-
-            // add some commnents here for test
             case MotionEvent.ACTION_DOWN:
-                if(!isTracking) { // if it is not tracking, for the first time, it saves touched point
-                    curPoint = newPoint; // save the 1st touched point to be current point
-                    drawnContour.add(newPoint); // add to List<point> drawnContour
+                // get touched point
+                Point touchedPoint = new Point();
+                touchedPoint.x =  (double)x;
 
-//                Log.i(TAG, "Touch image coordinates: (" + x + ", " + y + ")");
-                }
+                // get pointTouched
+                touchedPoint1.x =  (double)x;
+                touchedPoint1.y =  (double)y;
 
-
-
-                break;
-            // touched moving
-            case MotionEvent.ACTION_MOVE:
-
-                drawnContour.add(newPoint); // add newTouchPoint to drawnContour
-                Core.line(mRgba, curPoint, newPoint, BOUNDING_COLOR, 3); // draw line for new contour
-                curPoint = newPoint; // set newTouchPoint as new current point
-
-                break;
-            // when finger up
-            case MotionEvent.ACTION_UP:
-
-                MatOfPoint mopDrawnRect = new MatOfPoint(); // initialize MatOfPoint to convert drawnContour from List to MatOfPoint
-                mopDrawnRect.fromList(drawnContour); // convert List to MOP
-                drawnRect = Imgproc.boundingRect(mopDrawnRect); // get bounding rect for drawnContour
-
-                // check if x y is in image frame
-                if ((x < 0) || (y < 0) || (x > cols) || (y > rows)) return false;
-
-
-                pointOfInterest = new Point(); // new point
+                // expand touchRect to 4x4
                 Rect touchedRect = new Rect();
-
                 touchedRect.x = (x>4) ? x-4 : 0;
                 touchedRect.y = (y>4) ? y-4 : 0;
-
                 touchedRect.width = (x+4 < cols) ? x + 4 - touchedRect.x : cols - touchedRect.x;
                 touchedRect.height = (y+4 < rows) ? y + 4 - touchedRect.y : rows - touchedRect.y;
-
-                // get the regionOfInterest
-                regionOfInterest = touchedRect ;
-
-                // get pointOfInterest
-                pointOfInterest.x =  (double)x;
-                pointOfInterest.y =  (double)y;
 
                 // get color for touchedRegion
                 Mat touchedRegionRgba = mRgba.submat(touchedRect);
@@ -224,14 +190,34 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 Log.i(TAG, "Touched rgba color: (" + mBlobColorRgba.val[0] + ", " + mBlobColorRgba.val[1] +
                         ", " + mBlobColorRgba.val[2] + ", " + mBlobColorRgba.val[3] + ")");
 
-                mDetector.setHsvColor(mBlobColorHsv);
+                if(!mIsTracking) { // 1st object incoming
+                    mDetector.setHsvColor(mBlobColorHsv); // pass HSV value to detector
+                    Imgproc.resize(mDetector.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
 
-                Imgproc.resize(mDetector.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
+                    touchedPoint1 = touchedPoint ;
+                    touchedRect1 = touchedRect ;
+                }
+                else {
+                    mDetector2.setHsvColor(mBlobColorHsv); // pass HSV value to detector
+                    Imgproc.resize(mDetector2.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
+                    touchedRect2 = touchedRect;
+                    touchedPoint2 = touchedPoint;
+                }
 
+                mIsTracking = true;
                 mIsColorSelected = true;
 
                 touchedRegionRgba.release();
                 touchedRegionHsv.release();
+
+                break;
+            // touched moving
+            case MotionEvent.ACTION_MOVE:
+
+                break;
+            // when finger up
+            case MotionEvent.ACTION_UP:
+
                 break;
         }
 
@@ -244,19 +230,17 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
         if (mIsColorSelected) {
 
-
-            Core.rectangle(mRgba, drawnRect.tl(), drawnRect.br(), CONTOUR_COLOR);
-
-            // new tracking point
-            Point trackingPoint = new Point();
-//            trackingPoint.x = pointOfInterest.x-50.0;
-//            trackingPoint.y = pointOfInterest.y-50.0;
-
             // draw the touchedRegion
-            Core.rectangle(mRgba, regionOfInterest.tl(), regionOfInterest.br(), CONTOUR_COLOR);
-
+            Core.rectangle(mRgba, touchedRect1.tl(), touchedRect1.br(), CONTOUR_COLOR); // draw object 1
             // go to detection
             mDetector.process(mRgba);
+            if(mIsTracking){
+                Core.rectangle(mRgba, touchedRect2.tl(), touchedRect2.br(), CONTOUR_COLOR); // draw object 2
+                mDetector2.process(mRgba);
+
+            }
+
+
 
             // get contours
             List<MatOfPoint> contours = mDetector.getContours();
@@ -269,12 +253,12 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
             // get boundingBox for each contour
             for (int i = 0; i < contours.size(); i++) {
                 finalBox.add(i, Imgproc.boundingRect(contours.get(i)));
-//                if(pointOfInterest.inside(finalBox.get(i))||(trackingPoint.inside(finalBox.get(i)))){   // test for trackingPoint & pointOfInterest
-                if(pointOfInterest.inside(finalBox.get(i))){
+//                if(touchedPoint.inside(finalBox.get(i))||(trackingPoint.inside(finalBox.get(i)))){   // test for trackingPoint & touchedPoint
+                if(touchedPoint1.inside(finalBox.get(i))){
 
-                      Core.rectangle(mRgba, finalBox.get(i).tl(), finalBox.get(i).br(), BOUNDING_COLOR);
-                      trackingPoint.x = (finalBox.get(i).tl().x + finalBox.get(i).br().x)/2.0;
-                      trackingPoint.y = (finalBox.get(i).tl().y + finalBox.get(i).br().y)/2.0;
+                    Core.rectangle(mRgba, finalBox.get(i).tl(), finalBox.get(i).br(), BOUNDING_COLOR);
+                    trackingPoint.x = (finalBox.get(i).tl().x + finalBox.get(i).br().x)/2.0;
+                    trackingPoint.y = (finalBox.get(i).tl().y + finalBox.get(i).br().y)/2.0;
 //                    Log.e(TAG, "trackingPoint: " + trackingPoint);
 //                    Log.e(TAG, "final box: " + finalBox);
                 }
@@ -286,7 +270,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
                 }
             }
-                // determine if pointOfInterest is in the boundingBox
+            // determine if touchedPoint is in the boundingBox
 
             // display the boundingBox
             // draw contours
