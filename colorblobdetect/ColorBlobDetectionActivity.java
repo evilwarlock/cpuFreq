@@ -131,11 +131,11 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         touchedRect1 = new Rect(); // touched region 1
         touchedRect2 = new Rect(); // touched region 2
 
-        // initialize cpu controller, set to 400 MHz
+//        initialize cpu controller, set to 400 MHz
 //        cpuController1 = new CPUController();
 //        cpuController1.CPU_FreqChange(2);
-        //System.out.println("here");
-        Log.i(TAG, "Power save mode");
+//        System.out.println("here");
+//        Log.i(TAG, "Power save mode");
 
     }
 

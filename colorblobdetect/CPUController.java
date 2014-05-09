@@ -73,15 +73,15 @@ void CPU_FreqChange(int freq_idx){
 		
 	try{
         if(freq_idx==0)
-		 os.writeBytes("echo 100000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
+		 os.writeBytes("echo 384000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
         else  if(freq_idx==1)
-   		 os.writeBytes("echo 200000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
+   		 os.writeBytes("echo 594000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
         else  if(freq_idx==2)
-   		 os.writeBytes("echo 400000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
+   		 os.writeBytes("echo 810000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
         else  if(freq_idx==3)
-   		 os.writeBytes("echo 800000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
+   		 os.writeBytes("echo 1026000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
         else  if(freq_idx==4)
-   		 os.writeBytes("echo 1000000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
+   		 os.writeBytes("echo 1134000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
 	        os.flush();
 	}
 	catch(Exception ex){	
