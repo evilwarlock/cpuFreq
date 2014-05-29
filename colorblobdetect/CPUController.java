@@ -30,7 +30,9 @@ public class CPUController {
 			m_suprocess=Runtime.getRuntime().exec("su");
 		    os =new DataOutputStream(m_suprocess.getOutputStream());
 		    os.writeBytes("echo userspace>/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor\n");
-		    System.out.println("TEST44!!!");
+            os.writeBytes("echo userspace>/sys/devices/system/cpu/cpu1/cpufreq/scaling_governor\n");
+
+            System.out.println("TEST44!!!");
 		    os.flush();
 		    m_instream= new FileInputStream("/data/cpuinfo_cur_freq_buff.txt");
 			if(m_instream!=null){
@@ -72,17 +74,25 @@ void CPU_FreqChange(int freq_idx){
 	}
 		
 	try{
-        if(freq_idx==0)
-		 os.writeBytes("echo 384000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
-        else  if(freq_idx==1)
-   		 os.writeBytes("echo 594000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
-        else  if(freq_idx==2)
-   		 os.writeBytes("echo 810000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
-        else  if(freq_idx==3)
-   		 os.writeBytes("echo 1026000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
-        else  if(freq_idx==4)
-   		 os.writeBytes("echo 1134000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
-	        os.flush();
+        if(freq_idx==0){
+            os.writeBytes("echo 100000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
+            os.writeBytes("echo 100000 > /sys/devices/system/cpu/cpu1/cpufreq/scaling_setspeed\n");
+        }
+        else  if(freq_idx==1) {
+            os.writeBytes("echo 200000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
+            os.writeBytes("echo 200000 > /sys/devices/system/cpu/cpu1/cpufreq/scaling_setspeed\n");
+        }
+        else  if(freq_idx==2) {
+            os.writeBytes("echo 400000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
+        }
+        else  if(freq_idx==3) {
+            os.writeBytes("echo 800000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
+        }
+        else  if(freq_idx==4) {
+            os.writeBytes("echo 1000000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed\n");
+            os.writeBytes("echo 1000000 > /sys/devices/system/cpu/cpu1/cpufreq/scaling_setspeed\n");
+        }
+         os.flush();
 	}
 	catch(Exception ex){	
 

@@ -69,6 +69,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     private Scalar               BOUNDING_COLOR2;
     private Rect                 drawnRect;
     private CPUController        cpuController1;
+    private int                  counter;
 
     //    private Path                 pathDrawn;
     private CameraBridgeViewBase mOpenCvCameraView;
@@ -114,7 +115,9 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public void onCameraViewStarted(int width, int height) {
+//        mRgba = new Mat(height, width, CvType.CV_8UC4);
         mRgba = new Mat(height, width, CvType.CV_8UC4);
+
         mDetector = new ColorBlobDetector();
         mDetector2 = new ColorBlobDetector();
         mSpectrum = new Mat();
@@ -131,11 +134,11 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         touchedRect1 = new Rect(); // touched region 1
         touchedRect2 = new Rect(); // touched region 2
 
-//        initialize cpu controller, set to 400 MHz
-//        cpuController1 = new CPUController();
-//        cpuController1.CPU_FreqChange(2);
-//        System.out.println("here");
-//        Log.i(TAG, "Power save mode");
+        //initialize cpu controller, set to 400 MHz
+        cpuController1 = new CPUController();
+        cpuController1.CPU_FreqChange(1);
+        System.out.println("here");
+        Log.i(TAG, "Power save mode");
 
     }
 
@@ -144,8 +147,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     }
 
     public boolean onTouch(View v, MotionEvent event) {
-
-//        cpuController1.CPU_FreqChange(4);// Set the frequency to 1 GHz
+        //test
+        cpuController1.CPU_FreqChange(1);// Set the frequency to 1134000 KHz
 
         // get the real x y value after offset
         int cols = mRgba.cols();
@@ -154,6 +157,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         int yOffset = (mOpenCvCameraView.getHeight() - rows) / 2;
         int x = (int)event.getX() - xOffset;
         int y = (int)event.getY() - yOffset;
+
 
         // check if x y is in image frame
         if ((x < 0) || (y < 0) || (x > cols) || (y > rows)) return false;
@@ -166,6 +170,8 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 // get touched point
                 Point touchedPoint = new Point();
                 touchedPoint.x =  (double)x;
+                touchedPoint.y =  (double)y;
+
 
                 // get pointTouched
                 touchedPoint1.x =  (double)x;
@@ -200,16 +206,23 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
                     touchedPoint1 = touchedPoint ;
                     touchedRect1 = touchedRect ;
+                    counter= counter +1;
+
                 }
                 else {
                     mDetector2.setHsvColor(mBlobColorHsv); // pass HSV value to detector
                     Imgproc.resize(mDetector2.getSpectrum(), mSpectrum, SPECTRUM_SIZE);
                     touchedRect2 = touchedRect;
                     touchedPoint2 = touchedPoint;
+                    counter = counter +1;
                 }
 
                 mIsTracking = true;
                 mIsColorSelected = true;
+                if (counter == 3){
+                    mIsColorSelected = false;
+                    cpuController1.CPU_FreqChange(0);// Set the frequency to 1134000 KHz
+                }
 
                 touchedRegionRgba.release();
                 touchedRegionHsv.release();
