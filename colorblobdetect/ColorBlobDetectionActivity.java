@@ -68,7 +68,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
     private Scalar               BOUNDING_COLOR;
     private Scalar               BOUNDING_COLOR2;
     private Rect                 drawnRect;
-    private CPUController        cpuController1;
+//    private CPUController        cpuController1;
     private int                  counter;
 
     //    private Path                 pathDrawn;
@@ -90,6 +90,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
         mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.color_blob_detection_activity_surface_view);
         mOpenCvCameraView.setCvCameraViewListener(this);
+//        mOpenCvCameraView.setMaxFrameSize(320, 240); // set the resolution
 
     }
 
@@ -135,10 +136,10 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
         touchedRect2 = new Rect(); // touched region 2
 
         //initialize cpu controller, set to 400 MHz
-        cpuController1 = new CPUController();
-        cpuController1.CPU_FreqChange(1);
-        System.out.println("here");
-        Log.i(TAG, "Power save mode");
+//        cpuController1 = new CPUController();
+//        cpuController1.CPU_FreqChange(1);
+//        System.out.println("here");
+//        Log.i(TAG, "Power save mode");
 
     }
 
@@ -148,7 +149,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
 
     public boolean onTouch(View v, MotionEvent event) {
         //test
-        cpuController1.CPU_FreqChange(1);// Set the frequency to 1134000 KHz
+//        cpuController1.CPU_FreqChange(1);// Set the frequency to 1134000 KHz
 
         // get the real x y value after offset
         int cols = mRgba.cols();
@@ -221,7 +222,7 @@ public class ColorBlobDetectionActivity extends Activity implements OnTouchListe
                 mIsColorSelected = true;
                 if (counter == 3){
                     mIsColorSelected = false;
-                    cpuController1.CPU_FreqChange(0);// Set the frequency to 1134000 KHz
+//                    cpuController1.CPU_FreqChange(0);// Set the frequency to 1134000 KHz
                 }
 
                 touchedRegionRgba.release();
